@@ -258,3 +258,14 @@ async def test_parallel_duplicates_create_one_transaction(client: AsyncClient):
     status_codes = sorted(response.status_code for response in responses)
     assert status_codes == [201] + [409] * 4
     assert await get_balance(client, account_id) == "10.00"
+
+
+async def test_credit_above_maximum_balance_is_rejected(client: AsyncClient):
+    account_id = await create_account(client)
+    await add_transaction(client, account_id, "credit", "9999999999999999.99", "ref-1")
+
+    response = await add_transaction(client, account_id, "credit", "0.01", "ref-2")
+
+    assert response.status_code == 422
+    assert response.json()["error"]["code"] == "BALANCE_LIMIT_EXCEEDED"
+    assert await get_balance(client, account_id) == "9999999999999999.99"

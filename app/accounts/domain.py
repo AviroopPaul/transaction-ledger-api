@@ -23,6 +23,19 @@ class InsufficientBalance(BusinessRuleError):
         )
 
 
+class BalanceLimitExceeded(BusinessRuleError):
+    code = "BALANCE_LIMIT_EXCEEDED"
+
+    def __init__(self, account_id: UUID, balance: Decimal, amount: Decimal):
+        super().__init__(
+            f"The credit would make the balance larger than {MAX_BALANCE}.",
+            {"account_id": str(account_id), "balance": str(balance), "amount": str(amount)},
+        )
+
+
+MAX_BALANCE = Decimal("9999999999999999.99")
+
+
 @dataclass
 class Account:
     id: UUID
@@ -35,6 +48,8 @@ class Account:
         return cls(id=uuid7(), name=name, balance=Decimal("0.00"), created_at=datetime.now(UTC))
 
     def credit(self, amount: Decimal) -> None:
+        if self.balance + amount > MAX_BALANCE:
+            raise BalanceLimitExceeded(self.id, self.balance, amount)
         self.balance += amount
 
     def debit(self, amount: Decimal) -> None:

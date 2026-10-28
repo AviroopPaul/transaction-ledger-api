@@ -2,7 +2,7 @@ from decimal import Decimal
 
 import pytest
 
-from app.accounts.domain import Account, InsufficientBalance
+from app.accounts.domain import MAX_BALANCE, Account, BalanceLimitExceeded, InsufficientBalance
 
 
 def test_open_account_starts_with_zero_balance():
@@ -52,3 +52,13 @@ def test_debit_above_balance_is_rejected_and_balance_stays_same():
         account.debit(Decimal("150"))
 
     assert account.balance == Decimal("100")
+
+
+def test_credit_above_maximum_balance_is_rejected_and_balance_stays_same():
+    account = Account.open("Alice")
+    account.credit(MAX_BALANCE)
+
+    with pytest.raises(BalanceLimitExceeded):
+        account.credit(Decimal("0.01"))
+
+    assert account.balance == MAX_BALANCE

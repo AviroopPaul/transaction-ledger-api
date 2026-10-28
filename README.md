@@ -233,12 +233,13 @@ All errors use one format:
 | `422` | `VALIDATION_ERROR` | The body, path or query is not valid. `details.fields` lists each field and the problem. This covers an invalid type, an invalid amount, invalid pagination, a malformed account ID and invalid JSON. |
 | `422` | `INSUFFICIENT_BALANCE` | A debit or transfer is larger than the balance. |
 | `422` | `SAME_ACCOUNT_TRANSFER` | The source and destination accounts are the same. |
+| `422` | `BALANCE_LIMIT_EXCEEDED` | A credit or transfer would make the balance larger than `9999999999999999.99`. |
 
 ## Assumptions
 
 - **IDs** are UUIDv7. They are unique and sort by creation time, so the history order is stable when two rows have the same `created_at`.
 - **Money** has 2 decimal places. The API returns amounts and balances as strings (for example `"150.00"`) so that no precision is lost in JSON. Requests accept numbers or numeric strings.
-- **The maximum amount** is 16 digits before the decimal point (`NUMERIC(18, 2)`).
+- **The maximum amount and balance** is `9999999999999999.99` (`NUMERIC(18, 2)`). A credit that would go above this limit is rejected with `422`.
 - **The account balance** is stored on the account row. It always equals the sum of credits minus the sum of debits, because both change in one database transaction.
 - **A rejected transaction is not saved.** An insufficient-balance debit leaves no record. The client can retry with the same `reference_id`.
 - **The duplicate check runs before the balance check.** A repeated `reference_id` always gets `409`, even if the debit would also fail for low balance.

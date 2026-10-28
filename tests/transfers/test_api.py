@@ -164,3 +164,19 @@ async def test_parallel_opposite_transfers_keep_total_and_do_not_deadlock(client
     assert all(response.status_code == 201 for response in responses)
     assert await get_balance(client, alice) == "100.00"
     assert await get_balance(client, bob) == "100.00"
+
+
+async def test_transfer_above_destination_maximum_rolls_back_debit(client: AsyncClient):
+    alice = await create_account(client, "Alice", 100)
+    bob = await create_account(client, "Bob")
+    await client.post(
+        f"/api/v1/accounts/{bob}/transactions",
+        json={"type": "credit", "amount": "9999999999999999.99", "reference_id": "max"},
+    )
+
+    response = await transfer(client, alice, bob, 1, "transfer-1")
+
+    assert response.status_code == 422
+    assert response.json()["error"]["code"] == "BALANCE_LIMIT_EXCEEDED"
+    assert await get_balance(client, alice) == "100.00"
+    assert await get_balance(client, bob) == "9999999999999999.99"
