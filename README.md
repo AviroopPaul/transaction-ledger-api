@@ -37,6 +37,16 @@ uv sync
 uv run pytest
 ```
 
+## Try it with Postman
+
+Import `postman/transaction-ledger.postman_collection.json` into Postman. It has 60 requests in folders that follow the sections of the assessment. Each request has test scripts.
+
+1. Start the API with `docker compose up --build`.
+2. Run the whole collection with the Collection Runner, in order. The first requests create two accounts and save their IDs for the later requests.
+3. Change the `baseUrl` collection variable if the API is not on `http://localhost:8000`.
+
+Each run creates new accounts, so you can run it many times.
+
 ## Run without Docker for the API
 
 ```bash
